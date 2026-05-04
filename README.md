@@ -10,7 +10,8 @@ the [`pg_hba.conf`](https://www.postgresql.org/docs/16/auth-pg-hba-conf.html) fi
 
 An example of configuration file can be found in `check-postgresql-cluster-lemonldap-ng/configuration.json`.
 
-Local configuration must be added in file: `check-postgresql-cluster-lemonldap-ng/configuration.local.json` to avoid being disturbed by upgrades.
+Local configuration must be added in file: `check-postgresql-cluster-lemonldap-ng/configuration.local.json`
+to avoid being disturbed by upgrades.
 
 ## Commands
 
@@ -29,9 +30,9 @@ PGPASSWORD=$PASSWORD psql -h $HOST -p $PORT -U "$REPLICATION" -d "$DATABASE"
 
 The `check-config` command verify logical replication parameters in PostgreSQL instance:
 
-    - `listen_addresses = *`, other configurations may work. Only a warning is
-      shown for this attribute.
-    - `wal_level = logical`, a error is shown since this is a necessary value.
+- `listen_addresses = *`, other configurations may work. Only a warning is
+  shown for this attribute.
+- `wal_level = logical`, a error is shown since this is a necessary value.
 
 If `pg_hba_file_rules` view is readable via a super user, the `pg_hba.conf`
 entries with the replication user are shown. If not, a warning is shown.
