@@ -1,0 +1,23 @@
+{
+  "main":{
+    "database" : "lemonldap",
+    "user" : "replication",
+    "password" : "replicationsecret",
+    "host" : "127.0.0.1",
+    "port" : "5432",
+    "publication" : "publication_replication",
+    "super_user" : "None",
+    "super_password" : "None"
+  },
+  "backup":{
+    "database" : "lemonldap",
+    "user" : "replication",
+    "password" : "replicationsecret",
+    "host" : "127.0.0.1",
+    "port" : "5433",
+    "publication" : "publication_replication",
+    "super_user" : "None",
+    "super_password" : "None"
+  }
+}
+
