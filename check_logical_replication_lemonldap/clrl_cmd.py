@@ -1,7 +1,8 @@
 from pathlib import Path
 import json
-import psql_cmd
+import psql_cmd as psql
 import sys
+from psycopg import Connection as pconnect
 
 
 def read_configuration(configuration_file: str) -> dict:
@@ -29,87 +30,103 @@ def read_configuration(configuration_file: str) -> dict:
         sys.exit(2)
 
 
-def define_configuration(configuration_file: str):
+def define_configuration(configuration_file: str) -> dict:
     """
-    Read local and global configuration files. Then overwrite global with local
-    values if they exist.
-    - Inexistant or invalid global configuration file will raise an error and exit.
-    - Inexistant or invalid local configuration file will raise a warning and
-      continue.
+    Read  and compare local and global configuration files. Afterwards,
+    overwrite global with existing local values.
+
+    Parameters:
+    configuration_file (str): Configuration file path.
+
+    Returns:
+    dict: Dictionary with full configuration options.
     """
-    configuration = read_configuration("./configuration.json")
-    if configuration == 2:
-        print("[Error] Global configuration error.")
-        sys.exit(2)
-    configuration_locale = read_configuration(configuration_file)
-    if configuration_locale == 2:
-        print("[Warning] Local configuration error.")
-    elif type(configuration_locale) is dict:
-        for key in configuration_locale.keys():
-            for second_key in configuration_locale[key].keys():
-                configuration[key][second_key] = configuration_locale[key][second_key]
-    return configuration
+    configuration_global = read_configuration("./configuration.json")
+    configuration_local = read_configuration(configuration_file)
+    for key in configuration_local.keys():
+        for second_key in configuration_local[key].keys():
+            configuration_global[key][second_key] = configuration_local[key][second_key]
+    return configuration_global
 
 
-def check_connection(server_info):
+def check_connection(server_info: dict):
     """
-    Connect and disconnects to server with normal account.
-    - Raises an error and exits if can not connect to database.
+    Connect and disconnects to PostgreSQL database to confirm that everything
+    is ok.
+
+    Parameters:
+    server_info (dict): Dictionary with server configuration.
     """
-    connect = psql_cmd.connect_to_database(server_info)
-    psql_cmd.disconnect_to_database(connect)
+    connect = psql.connect_to_database(server_info)
+    psql.disconnect_to_database(connect)
 
 
-def check_config(server_info):
-    message = []
+def check_config(server_info: dict):
+    """
+    Check configuration for listen_addresses, wal_level and pg_hba file.
+
+    Parameters:
+    server_info (dict): Dictionary with server configuration.
+    """
     if "super_user" in server_info and server_info["super_user"] != 'None':
-        connect = psql_cmd.connect_to_database(server_info, high_privilege=True)
-        message = psql_cmd.verify_pg_hba(connect, server_info["user"])
-        psql_cmd.disconnect_to_database(connect)
+        connect = psql.connect_to_database(server_info, high_privilege=True)
+        psql.verify_pg_hba(connect, server_info["user"])
+        psql.disconnect_to_database(connect)
     else:
         print('[Warning] Super user not configured, pg_hba.file not read.')
-    connect = psql_cmd.connect_to_database(server_info)
-    psql_cmd.verify_server_config(connect)
-    psql_cmd.disconnect_to_database(connect)
-    return message
+    connect = psql.connect_to_database(server_info)
+    psql.verify_server_config(connect)
+    psql.disconnect_to_database(connect)
 
 
-def check_sync(server_info_main, server_info_backup, sensibility=3):
-    number_try = 0
-    connect_main = psql_cmd.connect_to_database(server_info_main)
-    connect_backup = psql_cmd.connect_to_database(server_info_backup)
+def check_sync(server_info_main: dict, server_info_backup: dict,
+               sensibility: int = 3):
+    """
+    Check configuration for listen_addresses, wal_level and pg_hba file.
 
-    check_config_number(connect_main, connect_backup, number_try, sensibility)
-    check_sessions(connect_main, connect_backup, number_try)
+    Parameters:
+    server_info_main (dict): Dictionary with configuration for main server.
+    server_info_backup (dict): Dictionary with configuration for backup server.
+    sensibility (int): Intervale to consider sessions synchronised.
+    """
+    connect_main = psql.connect_to_database(server_info_main)
+    connect_backup = psql.connect_to_database(server_info_backup)
 
-    psql_cmd.disconnect_to_database(connect_main)
-    psql_cmd.disconnect_to_database(connect_backup)
+    for _ in range(2):
+        value = check_config_number(connect_main, connect_backup)
+        if value:
+            break
+    else:
+        print("[Error] Configurations are not synchronised")
+        sys.exit(2)
+
+    for _ in range(3):
+        value = check_sessions(connect_main, connect_backup, interval=2)
+        if value:
+            break
+    else:
+        print("[Error] Sessions are not synchronised")
+        sys.exit(2)
+
+    psql.disconnect_to_database(connect_main)
+    psql.disconnect_to_database(connect_backup)
 
 
-def check_config_number(connect_main, connect_backup, number_try, sensibility=3):
-    number_try += 1
-    config_main = psql_cmd.get_config_number(connect_main)
-    config_backup = psql_cmd.get_config_number(connect_backup)
+def check_config_number(connect_main: pconnect, connect_backup: pconnect) -> bool:
+    config_main = psql.get_config_number(connect_main)
+    config_backup = psql.get_config_number(connect_backup)
     if config_main == config_backup:
         print("Configuration is synchronised.")
-        print(f"Config number: {config_main}")
-        return
-    elif sensibility == number_try:
-        print(f"[Error] Configurations are not in synchronisation. Main: {config_main}, backup: {config_backup}.")
-        sys.exit(2)
-    else:
-        check_config_number(connect_main, connect_backup, number_try, sensibility)
-    return
+        return True
+    return False
 
 
-def check_sessions(connect_main, connect_backup, number_try, sensibility=5):
-    number_try += 1
-    session_main = psql_cmd.get_count_sessions(connect_main)
-    session_backup = psql_cmd.get_count_sessions(connect_backup)
-    if (int(session_backup) - 1) <= int(session_main) <= int(session_backup):
+def check_sessions(connect_main: pconnect, connect_backup: pconnect,
+                   interval: int) -> bool:
+    session_main = psql.get_count_sessions(connect_main)
+    session_backup = psql.get_count_sessions(connect_backup)
+    min_value = session_backup - interval
+    if min_value <= int(session_main) <= int(session_backup):
         print("Sessions are synchronised.")
-    elif sensibility == number_try:
-        print(f"[Error] Sessions are not in synchronisation. Main: {session_main}, backup: {session_backup}.")
-        sys.exit(2)
-    else:
-        check_sessions(connect_main, connect_backup, number_try, sensibility)
+        return True
+    return False
