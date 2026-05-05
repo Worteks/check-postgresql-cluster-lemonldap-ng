@@ -15,6 +15,8 @@ to avoid being disturbed by upgrades.
 
 ## Commands
 
+### Check connection
+
 The `check-connection` command verify the connection to both databases from
 local server via the replication user.
 
@@ -28,6 +30,8 @@ For example:
 PGPASSWORD=$PASSWORD psql -h $HOST -p $PORT -U "$REPLICATION" -d "$DATABASE"
 ```
 
+### Check configuration
+
 The `check-config` command verify logical replication parameters in PostgreSQL instance:
 
 - `listen_addresses = *`, other configurations may work. Only a warning is
@@ -38,6 +42,8 @@ If `pg_hba_file_rules` view is readable via a super user, the `pg_hba.conf`
 entries with the replication user are shown. If not, a warning is shown.
 
 > If a `super_user` is badly configured, this will result in an error.
+
+### Check synchronization
 
 The `check-sync` command is based in two simple calculations:
 
