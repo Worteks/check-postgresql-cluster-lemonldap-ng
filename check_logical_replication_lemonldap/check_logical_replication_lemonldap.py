@@ -11,13 +11,10 @@ def check_sync(configuration: dict):
 
 def check_config(configuration: dict):
     for server in configuration.keys():
+        print(f"* {server.capitalize()} server configuration:")
         messages = clrl_cmd.check_config(configuration[server])
-        print(f"* {server.capitalize()} server configuration: ok")
-        if messages:
-            for message in messages:
-                print(message)
-
-
+        print("Configuration is ok.")
+        
 def check_connection(configuration: dict):
     for server in configuration.keys():
         clrl_cmd.check_connection(configuration[server])
@@ -28,7 +25,8 @@ def check_connection(configuration: dict):
 
 parser = argparse.ArgumentParser(
         prog="check_logical_replication_lemonldap",
-        description="Tool to verify configuration and synchronisation of PostgreSQL logical replicationn for LemonLDAP-NG",
+        description="Tool to verify configuration and synchronisation of \
+                PostgreSQL logical replicationn for LemonLDAP-NG",
         epilog="Thanks for using %(prog)s! :)",)
 
 # Subcommands
@@ -44,7 +42,8 @@ sync_parser.set_defaults(func=check_sync)
 
 config_parser = subparsers.add_parser(
         "check-config",
-        help="Check basic logical replication configuration, by default in both servers.",
+        help="Check basic logical replication configuration, by default in \
+                both servers.",
         )
 config_parser.set_defaults(func=check_config)
 
@@ -66,7 +65,7 @@ parser.add_argument(
         type=str
         )
 parser.add_argument(
-        # Not yet in use.
+        # TODO: Adding use of verbose.
         "-v", "--verbose",
         help="Increase output verbosity.",
         action="store_true"
