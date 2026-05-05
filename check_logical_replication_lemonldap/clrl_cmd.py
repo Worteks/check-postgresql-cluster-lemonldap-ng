@@ -4,7 +4,7 @@ import psql_cmd
 import sys
 
 
-def read_configuration(configuration_file: str) -> dict | int:
+def read_configuration(configuration_file: str) -> dict:
     """
     Read configuration from a file into a dictionary.
 
@@ -12,14 +12,21 @@ def read_configuration(configuration_file: str) -> dict | int:
     configuration_file (str): Configuration file path.
 
     Returns:
-    dict: A dictionary with the configuration options.
-    int: 2, only when an error occurs.
+    dict: Dictionary with the configuration options.
+
+    Raises:
+    FileNotFoundError:
+    json.decoder.JSONDecodeError:
     """
     configuration_path = Path(configuration_file)
     try:
         return json.load(open(configuration_path))
-    except json.decoder.JSONDecodeError or FileNotFoundError:
-        return 2
+    except FileNotFoundError:
+        print(f"[Error] File not found: {configuration_file}.")
+        sys.exit(2)
+    except json.decoder.JSONDecodeError:
+        print(f"[Error] Badly configured json file: {configuration_file}.")
+        sys.exit(2)
 
 
 def define_configuration(configuration_file: str):
