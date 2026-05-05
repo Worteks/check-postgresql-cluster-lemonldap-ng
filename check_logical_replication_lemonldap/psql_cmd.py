@@ -30,11 +30,11 @@ def disconnect_to_database(connect):
 
 def verify_server_config(connect):
     listen_addresses = sql_command_error_catching(connect,
-                                                 "SHOW listen_addresses")[0]
+                                                 "SHOW listen_addresses")
     if listen_addresses != "*":
         print(f'[Warning] Listen_addresses not set to *, listen_addressess={listen_addresses}.')
     wal_level = sql_command_error_catching(connect,
-                                           "SHOW wal_level")[0]
+                                           "SHOW wal_level")
     if wal_level != "logical":
         print(f'[Error] WAL level not set as logical, wal_level={wal_level}.')
         sys.exit(2)
@@ -43,6 +43,8 @@ def verify_server_config(connect):
 
 def verify_pg_hba(connect, user):
     """
+    Get pg_hba view entries for the replication user.
+
     This view can be helpful to diagnose a previous failure. Note that this
     view reports on the current contents of the file, not on what was last
     loaded by the server.
@@ -51,9 +53,9 @@ def verify_pg_hba(connect, user):
     """
     sql_cmd = "SELECT * FROM pg_hba_file_rules() WHERE user_name = "+ "'{"+user+"}'"
     results = sql_command_error_catching(connect, sql_cmd)
-    if type(results) is str:
-        print("[Warning] Insufficient privilege to access pg_hba file rules with user:'{user}'.")
-    elif type(results) is psycopg.Cursor:
+    if results is psycopg.errors.InsufficientPrivilege:
+        print(f"[Warning] Insufficient privilege to access pg_hba file rules with user:'{user}'.")
+    elif type(results) is list:
         messages = []
         for result in results:
             messages.append(f' - Host: {result[6]}, database: {result[4]}, user: {result[5]}.')
@@ -61,12 +63,21 @@ def verify_pg_hba(connect, user):
 
 
 def sql_command_error_catching(connect, sql_cmd):
+    """
+    Run the SQL commands, return a single value (int, str, etc..) if only one
+    result else it returns a list with all the values.
+    - Returns an error when insufficient privilege.
+    """
     try:
         dbcursor = connect.cursor()
         dbcursor.execute(sql_cmd)
-        return dbcursor.fetchall()[0]
+        result = dbcursor.fetchall()
+        if len(result) == 1:
+            return result[0][0]
+        else:
+            return result
     except psycopg.errors.InsufficientPrivilege:
-        return "Permission denied, insufficient privilege."
+        return psycopg.errors.InsufficientPrivilege
 
 
 def get_config_number(connect):

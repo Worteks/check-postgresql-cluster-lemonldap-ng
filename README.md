@@ -43,7 +43,7 @@ entries with the replication user are shown. If not, a warning is shown.
 
 > If a `super_user` is badly configured, this will result in an error.
 
-### Check synchronization
+### Check synchronisation
 
 The `check-sync` command is based in two simple calculations:
 

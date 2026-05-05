@@ -73,13 +73,14 @@ def check_sync(server_info_main, server_info_backup, sensibility=3):
 
 def check_config_number(connect_main, connect_backup, number_try, sensibility=3):
     number_try += 1
-    config_main = psql_cmd.get_config_number(connect_main)[0]
-    config_backup = psql_cmd.get_config_number(connect_backup)[0]
+    config_main = psql_cmd.get_config_number(connect_main)
+    config_backup = psql_cmd.get_config_number(connect_backup)
     if config_main == config_backup:
-        print(f"The config number: {config_main}")
+        print("Configuration is synchronised.")
+        print(f"Config number: {config_main}")
         return
     elif sensibility == number_try:
-        print(f"[Error] Configurations are not in sync. Main: {config_main}, backup: {config_backup}.")
+        print(f"[Error] Configurations are not in synchronisation. Main: {config_main}, backup: {config_backup}.")
         sys.exit(2)
     else:
         check_config_number(connect_main, connect_backup, number_try, sensibility)
@@ -88,12 +89,12 @@ def check_config_number(connect_main, connect_backup, number_try, sensibility=3)
 
 def check_sessions(connect_main, connect_backup, number_try, sensibility=5):
     number_try += 1
-    session_main = psql_cmd.get_count_sessions(connect_main)[0]
-    session_backup = psql_cmd.get_count_sessions(connect_backup)[0]
+    session_main = psql_cmd.get_count_sessions(connect_main)
+    session_backup = psql_cmd.get_count_sessions(connect_backup)
     if (int(session_backup) - 1) <= int(session_main) <= int(session_backup):
-        print("Sessions are syncd.")
+        print("Sessions are synchronised.")
     elif sensibility == number_try:
-        print(f"[Error] Sessions are not in sync. Main: {session_main}, backup: {session_backup}.")
+        print(f"[Error] Sessions are not in synchronisation. Main: {session_main}, backup: {session_backup}.")
         sys.exit(2)
     else:
         check_sessions(connect_main, connect_backup, number_try, sensibility)
