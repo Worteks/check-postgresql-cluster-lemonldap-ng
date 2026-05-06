@@ -5,13 +5,13 @@ Monitoring script to check if a LL::NG PostgreSQL cluster is in sync
 
 Configuration file is expected in `json` format. Variables are mostly self explanatory.
 
-Last two variables ,`DB_SUPER_USER` and `DB_SUPER_PASSWORD`, are used to read
-the [`pg_hba.conf`](https://www.postgresql.org/docs/16/auth-pg-hba-conf.html) file. This required special privileges in PostgreSQL that replication user may not have. This variables can stay undefined.
+Local configuration must be added in file: `check-postgresql-cluster-lemonldap-ng/configuration.local.json`
+
+Local configuration most include at least the `main` and `backup` server parameters;
+except for  `super_user` and `super_password`. This two last variables are used to read the
+[`pg_hba.conf`](https://www.postgresql.org/docs/16/auth-pg-hba-conf.html) file which requires special privileges in PostgreSQL.
 
 An example of configuration file can be found in `check-postgresql-cluster-lemonldap-ng/configuration.json`.
-
-Local configuration must be added in file: `check-postgresql-cluster-lemonldap-ng/configuration.local.json`
-to avoid being disturbed by upgrades.
 
 ## Commands
 
@@ -51,6 +51,43 @@ The `check-sync` command is based in two simple calculations:
   reason for replication, hence the verification. Most installations will be low
   traffic. 
 - Count the number of entries in the `sessions` tables. The number of sessions
-  in main server is compared to the number of bakcup sessions. A margin of error
+  in main server is compared to the number of backup sessions. A margin of error
   of 2 is added to account for the time needed to reflect a new connection. This
   is repeated at most 5 times before declaring out of  sync.
+
+## Installation
+
+Clone de repository into the server
+
+```bash
+git clone https://github.com/Worteks/check-postgresql-cluster-lemonldap-ng.git
+```
+
+Install dependencies
+```bash
+# Debian
+sudo apt install python3-psycopg
+# Fedora
+sudo dnf install python3-psycopg3
+```
+
+> If the OS psycopg version is not compatible, you can use a virtual environment, see
+> below for configuration.
+
+Copy global configuration into a local file and add PostgreSQL connection parameters
+
+```bash
+cd check_logical_replication_lemonldap/
+cp configuration.json configuration.local.json
+vim configuration.local.json
+```
+
+### Installation via a virtual environment
+
+The repository comes with a `requirements.txt` file to create your virtual
+environment.
+
+```bash
+cd check_logical_replication_lemonldap/
+python3 -m pip venv .venv
+python3 -m pip install -r requirements.txt
