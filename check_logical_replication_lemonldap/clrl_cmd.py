@@ -5,12 +5,12 @@ import sys
 from psycopg import Connection as pconnect
 
 
-def read_configuration(configuration_file: str) -> dict:
+def read_configuration(configuration_path: Path) -> dict:
     """
     Read configuration from a file into a dictionary.
 
     Parameters:
-    configuration_file (str): Configuration file path.
+    configuration_path (Path): Configuration file path.
 
     Returns:
     dict: Dictionary with the configuration options.
@@ -19,14 +19,13 @@ def read_configuration(configuration_file: str) -> dict:
     FileNotFoundError:
     json.decoder.JSONDecodeError:
     """
-    configuration_path = Path(configuration_file)
     try:
         return json.load(open(configuration_path))
     except FileNotFoundError:
-        print(f"[Error] File not found: {configuration_file}.")
+        print(f"[Error] File not found: {configuration_path}.")
         sys.exit(2)
     except json.decoder.JSONDecodeError:
-        print(f"[Error] Badly configured json file: {configuration_file}.")
+        print(f"[Error] Badly configured json file: {configuration_path}.")
         sys.exit(2)
 
 

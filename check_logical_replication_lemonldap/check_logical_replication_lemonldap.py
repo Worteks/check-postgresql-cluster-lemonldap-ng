@@ -1,8 +1,6 @@
 import argparse
 import clrl_cmd
-
-# This is the main script.
-# We parse the arguments and options and return adapt exit codes and messages.
+from pathlib import Path
 
 
 def check_sync(configuration: dict):
@@ -62,7 +60,7 @@ parser.add_argument(
         "-c", "--config",
         help="Define à configuration file",
         default="./configuration.local.json",
-        type=str
+        type=Path
         )
 parser.add_argument(
         # TODO: Adding use of verbose.
