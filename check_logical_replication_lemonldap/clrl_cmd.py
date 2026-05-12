@@ -61,6 +61,7 @@ def check_connection(server_info: dict):
 
 
 def check_config(server_info: dict):
+    # TODO: Add a Select to a table to make sure of permissions for tables.
     """
     Check configuration for listen_addresses, wal_level and pg_hba file.
 
@@ -69,17 +70,17 @@ def check_config(server_info: dict):
     """
     if "super_user" in server_info and server_info["super_user"] != 'None':
         connect = psql.connect_to_database(server_info, high_privilege=True)
-        psql.verify_pg_hba(connect, server_info["user"])
+        psql.get_replication_config(connect, server_info["user"])
         psql.disconnect_to_database(connect)
     else:
         print('[Warning] Super user not configured, pg_hba.file not read.')
     connect = psql.connect_to_database(server_info)
-    psql.verify_server_config(connect)
+    psql.get_server_config(connect)
     psql.disconnect_to_database(connect)
 
 
 def check_sync(server_info_main: dict, server_info_backup: dict,
-               sensibility: int = 3):
+               interval: int = 3):
     """
     Check configuration for listen_addresses, wal_level and pg_hba file.
 
@@ -100,7 +101,7 @@ def check_sync(server_info_main: dict, server_info_backup: dict,
         sys.exit(2)
 
     for _ in range(3):
-        value = check_sessions(connect_main, connect_backup, interval=2)
+        value = check_sessions(connect_main, connect_backup, interval)
         if value:
             break
     else:

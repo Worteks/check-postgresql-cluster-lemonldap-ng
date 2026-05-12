@@ -10,9 +10,10 @@ def check_sync(configuration: dict):
 def check_config(configuration: dict):
     for server in configuration.keys():
         print(f"* {server.capitalize()} server configuration:")
-        messages = clrl_cmd.check_config(configuration[server])
-        print("Configuration is ok.")
-        
+        clrl_cmd.check_config(configuration[server])
+        print("Configuration is ok")
+
+
 def check_connection(configuration: dict):
     for server in configuration.keys():
         clrl_cmd.check_connection(configuration[server])

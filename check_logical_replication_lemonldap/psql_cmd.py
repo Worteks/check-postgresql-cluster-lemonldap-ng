@@ -2,7 +2,8 @@ import psycopg
 import sys
 
 
-def connect_to_database(server_info: dict, high_privilege=False):
+def connect_to_database(server_info: dict,
+                        high_privilege: bool = False) -> psycopg.Connection:
     host = server_info["host"]
     port = server_info["port"]
     database = server_info["database"]
@@ -19,16 +20,16 @@ def connect_to_database(server_info: dict, high_privilege=False):
                                      user=user, password=password,
                                      autocommit=True)
     except psycopg.OperationalError:
-        print(f"[Error] Could not connect to database: host:{host}, port:{port}, database:{database}, user:{user}.")
+        print(f"[Error] Cannot connect: host:{host}, port:{port}, db:{database}, user:{user}")
         sys.exit(2)
     return connection
 
 
-def disconnect_to_database(connect):
+def disconnect_to_database(connect: psycopg.Connection):
     connect.close()
 
 
-def verify_server_config(connect):
+def get_server_config(connect: psycopg.Connection):
     listen_addresses = sql_command_error_catching(connect,
                                                  "SHOW listen_addresses")
     if listen_addresses != "*":
@@ -41,7 +42,26 @@ def verify_server_config(connect):
     return listen_addresses, wal_level
 
 
-def verify_pg_hba(connect, user):
+def get_high_privilege_sql_cmd(connect: psycopg.Connection, sql_cmd: str):
+    """
+    Run a SQL command that requires high privilege, superuser.
+
+    This view can be helpful to diagnose a previous failure. Note that this
+    view reports on the current contents of the file, not on what was last
+    loaded by the server.
+    - Raises an error when connection to database is not possible because of
+      wrong configuration.
+    - Raises a warning if not sufficient privilege to run sql command.
+    """
+    results = sql_command_error_catching(connect, sql_cmd)
+    if results[0] is psycopg.errors.InsufficientPrivilege:
+        print(f'[Warning] Insufficient privilege. Command: "{sql_cmd}"')
+    else:
+        return results
+
+
+
+def get_replication_config(connect: psycopg.Connection, user: str):
     """
     Get pg_hba view entries for the replication user.
 
@@ -51,18 +71,23 @@ def verify_pg_hba(connect, user):
     - Raises an error connection to database is not possible.
     - Raises a warning if not sufficient privilege to read view.
     """
-    sql_cmd = "SELECT * FROM pg_hba_file_rules() WHERE user_name = "+ "'{"+user+"}'"
-    results = sql_command_error_catching(connect, sql_cmd)
-    if results is psycopg.errors.InsufficientPrivilege:
-        print(f"[Warning] Insufficient privilege to access pg_hba file rules with user:'{user}'.")
-    elif type(results) is list:
-        messages = []
+    sql_cmd = f"SELECT * FROM pg_hba_file_rules() WHERE user_name = '{{{user}}}'"
+    results = get_high_privilege_sql_cmd(connect, sql_cmd)
+    if results:
+        print("- pg_hba.conf:")
         for result in results:
-            messages.append(f' - Host: {result[6]}, database: {result[4]}, user: {result[5]}.')
-        return messages
+            print(f' -> host: {result[6]}, db: {result[4][0]}, user: {result[5][0]}')
+    sql_cmd = "SELECT subconninfo FROM pg_subscription"
+    results = get_high_privilege_sql_cmd(connect, sql_cmd)
+    if results:
+        print("- subscriptions:")
+        # Result string formatting for printing
+        results = results.replace("\n", "").split(" ")
+        results = " ".join([x for x in results if x])
+        print(f" ->  {results}")
 
 
-def sql_command_error_catching(connect, sql_cmd):
+def sql_command_error_catching(connect: psycopg.Connection, sql_cmd: str) -> list:
     """
     Run the SQL commands, return a single value (int, str, etc..) if only one
     result else it returns a list with all the values.
@@ -77,16 +102,18 @@ def sql_command_error_catching(connect, sql_cmd):
         else:
             return result
     except psycopg.errors.InsufficientPrivilege:
-        return psycopg.errors.InsufficientPrivilege
+        return [psycopg.errors.InsufficientPrivilege]
 
 
-def get_config_number(connect):
-    config_number = sql_command_error_catching(connect, "SELECT max(cfgnum) FROM lmConfig")
+def get_config_number(connect: psycopg.Connection):
+    config_number = sql_command_error_catching(connect,
+                                               "SELECT max(cfgnum) FROM lmConfig")
     return config_number
 
 
-def get_count_sessions(connect):
-    count_sessions = sql_command_error_catching(connect, "SELECT count(*) FROM sessions")
+def get_count_sessions(connect: psycopg.Connection):
+    count_sessions = sql_command_error_catching(connect,
+                                                "SELECT count(*) FROM sessions")
     return count_sessions
 
 
