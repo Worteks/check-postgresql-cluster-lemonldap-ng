@@ -39,7 +39,6 @@ def get_server_config(connect: psycopg.Connection):
     if wal_level != "logical":
         print(f'[Error] WAL level not set as logical, wal_level={wal_level}.')
         sys.exit(2)
-    return listen_addresses, wal_level
 
 
 def get_high_privilege_sql_cmd(connect: psycopg.Connection, sql_cmd: str):
