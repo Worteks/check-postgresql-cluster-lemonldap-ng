@@ -113,6 +113,17 @@ def check_sync(server_info_main: dict, server_info_backup: dict,
 
 
 def check_config_number(connect_main: pconnect, connect_backup: pconnect) -> bool:
+    """
+    Check the configuration number of both databases, then compare them to
+    verify synchronisation.
+
+    Parameters:
+    connect_main (pconnect): PostgreSQL connection to main server.
+    connect_backup (pconnect): PostgreSQL connection to backup server.
+
+    Returns:
+    bool: Boolean depending on synchronisation.
+    """
     config_main = psql.get_config_number(connect_main)
     config_backup = psql.get_config_number(connect_backup)
     if config_main == config_backup:
@@ -123,6 +134,18 @@ def check_config_number(connect_main: pconnect, connect_backup: pconnect) -> boo
 
 def check_sessions(connect_main: pconnect, connect_backup: pconnect,
                    interval: int) -> bool:
+    """
+    Check number of sessions of both databases, then compare them to
+    verify synchronisation.
+
+    Parameters:
+    connect_main (pconnect): PostgreSQL connection to main server.
+    connect_backup (pconnect): PostgreSQL connection to backup server.
+    interval: Integer to define tolerance interval.
+
+    Returns:
+    bool: Boolean depending on synchronisation.
+    """
     session_main = psql.get_count_sessions(connect_main)
     session_backup = psql.get_count_sessions(connect_backup)
     min_value = session_backup - interval
