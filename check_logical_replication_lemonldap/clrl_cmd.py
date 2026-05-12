@@ -29,18 +29,18 @@ def read_configuration(configuration_path: Path) -> dict:
         sys.exit(2)
 
 
-def define_configuration(configuration_file: str) -> dict:
+def define_configuration(configuration_file: Path) -> dict:
     """
     Read  and compare local and global configuration files. Afterwards,
     overwrite global with existing local values.
 
     Parameters:
-    configuration_file (str): Configuration file path.
+    configuration_file (pathlib.Path): Configuration file path.
 
     Returns:
     dict: Dictionary with full configuration options.
     """
-    configuration_global = read_configuration("./configuration.json")
+    configuration_global = read_configuration(Path("./configuration.json"))
     configuration_local = read_configuration(configuration_file)
     for key in configuration_local.keys():
         for second_key in configuration_local[key].keys():
