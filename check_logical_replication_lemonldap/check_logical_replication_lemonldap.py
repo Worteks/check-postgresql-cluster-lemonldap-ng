@@ -32,6 +32,7 @@ parser = argparse.ArgumentParser(
 subparsers = parser.add_subparsers(
     title="subcommands", help="Operations"
 )
+subparsers.required = True
 
 sync_parser = subparsers.add_parser(
         "check-sync",
