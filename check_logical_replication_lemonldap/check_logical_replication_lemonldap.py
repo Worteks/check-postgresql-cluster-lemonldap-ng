@@ -21,7 +21,6 @@ def check_connection(configuration: dict):
 
 
 # Argument parsing
-
 parser = argparse.ArgumentParser(
         prog="check_logical_replication_lemonldap",
         description="Tool to verify configuration and synchronisation of \
@@ -65,7 +64,6 @@ parser.add_argument(
         type=Path
         )
 parser.add_argument(
-        # TODO: Adding use of verbose.
         "-v", "--verbose",
         help="Increase output verbosity.",
         action="store_true"

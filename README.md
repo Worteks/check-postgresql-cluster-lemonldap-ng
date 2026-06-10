@@ -95,3 +95,12 @@ cd check_logical_replication_lemonldap/
 python3 -m pip venv .venv
 python3 -m pip install -r requirements.txt
 ```
+
+## Project wishlist
+
+- Adding [logging](https://docs.python.org/3/library/logging.html) and verbose.
+- Add code formatting: [ruff](https://docs.astral.sh/ruff/)
+- Add type hinting.
+- Add test [pytest](http://pytest.org)
+- Add class for servers.
+- Adding docstrings to functions.
