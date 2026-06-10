@@ -1,10 +1,9 @@
 import psycopg
 import sys
-import os
 from dotenv import dotenv_values
 
 config_local = dotenv_values(".env")
-# print(f'Database URL: {os.environ['DATABASE_URL_MAIN']}')
+
 
 def connect_to_database(server_info: dict,
                         high_privilege: bool = False) -> psycopg.Connection:
@@ -33,14 +32,9 @@ def disconnect_to_database(connect: psycopg.Connection):
     connect.close()
 
 
-def check_read_tables(connect: psycopg.Connection):
-    tables = ["lmConfig", "sessions", "psessions"]
-    for table in tables:
-        sql_command_error_catching(connect, f"SELECT * from {table} LIMIT 2")
-
 def get_server_config(connect: psycopg.Connection):
     listen_addresses = sql_command_error_catching(connect,
-                                                 "SHOW listen_addresses")
+                                                  "SHOW listen_addresses")
     if listen_addresses != "*":
         print(f'[Warning] Listen_addresses not set to *, listen_addressess={listen_addresses}.')
     wal_level = sql_command_error_catching(connect,
@@ -111,18 +105,6 @@ def sql_command_error_catching(connect: psycopg.Connection, sql_cmd: str) -> lis
             return result
     except psycopg.errors.InsufficientPrivilege:
         return [psycopg.errors.InsufficientPrivilege]
-
-
-def get_config_number(connect: psycopg.Connection):
-    config_number = sql_command_error_catching(connect,
-                                               "SELECT max(cfgnum) FROM lmConfig")
-    return config_number
-
-
-def get_count_sessions(connect: psycopg.Connection):
-    count_sessions = sql_command_error_catching(connect,
-                                                "SELECT count(*) FROM sessions")
-    return count_sessions
 
 
 # TODO: Add low level replication check

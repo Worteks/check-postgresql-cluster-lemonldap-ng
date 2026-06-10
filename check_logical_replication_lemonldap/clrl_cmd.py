@@ -1,6 +1,7 @@
+import lemonldap as llng
 from pathlib import Path
 import json
-import psql_cmd as psql
+import postgresql as psql
 import sys
 from psycopg import Connection as pconnect
 
@@ -58,7 +59,7 @@ def check_connection(server_info: dict):
     server_info (dict): Dictionary with server configuration.
     """
     connect = psql.connect_to_database(server_info)
-    psql.check_read_tables(connect)
+    llng.check_read_tables(connect)
     psql.disconnect_to_database(connect)
 
 
@@ -126,8 +127,8 @@ def check_config_number(connect_main: pconnect, connect_backup: pconnect) -> boo
     Returns:
     bool: Boolean depending on synchronisation.
     """
-    config_main = psql.get_config_number(connect_main)
-    config_backup = psql.get_config_number(connect_backup)
+    config_main = llng.get_config_number(connect_main)
+    config_backup = llng.get_config_number(connect_backup)
     if config_main == config_backup:
         print("Configuration is synchronised.")
         return True
@@ -148,8 +149,8 @@ def check_sessions(connect_main: pconnect, connect_backup: pconnect,
     Returns:
     bool: Boolean depending on synchronisation.
     """
-    session_main = psql.get_count_sessions(connect_main)
-    session_backup = psql.get_count_sessions(connect_backup)
+    session_main = llng.get_count_sessions(connect_main)
+    session_backup = llng.get_count_sessions(connect_backup)
     min_value = session_backup - interval
     if min_value <= int(session_main) <= int(session_backup):
         print("Sessions are synchronised.")
