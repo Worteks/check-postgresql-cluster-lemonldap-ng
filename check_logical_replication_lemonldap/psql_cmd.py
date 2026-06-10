@@ -1,6 +1,10 @@
 import psycopg
 import sys
+import os
+from dotenv import dotenv_values
 
+config_local = dotenv_values(".env")
+# print(f'Database URL: {os.environ['DATABASE_URL_MAIN']}')
 
 def connect_to_database(server_info: dict,
                         high_privilege: bool = False) -> psycopg.Connection:
@@ -28,6 +32,11 @@ def connect_to_database(server_info: dict,
 def disconnect_to_database(connect: psycopg.Connection):
     connect.close()
 
+
+def check_read_tables(connect: psycopg.Connection):
+    tables = ["lmConfig", "sessions", "psessions"]
+    for table in tables:
+        sql_command_error_catching(connect, f"SELECT * from {table} LIMIT 2")
 
 def get_server_config(connect: psycopg.Connection):
     listen_addresses = sql_command_error_catching(connect,

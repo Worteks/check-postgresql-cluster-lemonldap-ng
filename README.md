@@ -3,15 +3,16 @@ Monitoring script to check if a LL::NG PostgreSQL cluster is in sync
 
 ## Configuration file
 
-Configuration file is expected in `json` format. Variables are mostly self explanatory.
+Configuration file is expected in as `.env` file. Variables are mostly self explanatory.
+You can copy the `env.bckp` file to start with obligatory variables.
 
-Local configuration must be added in file: `check-postgresql-cluster-lemonldap-ng/configuration.local.json`
+```bash
+cp env.bckp .env
+```
 
 Local configuration most include at least the `main` and `backup` server parameters;
 except for  `super_user` and `super_password`. This two last variables are used to read the
 [`pg_hba.conf`](https://www.postgresql.org/docs/16/auth-pg-hba-conf.html) file which requires special privileges in PostgreSQL.
-
-An example of configuration file can be found in `check-postgresql-cluster-lemonldap-ng/configuration.json`.
 
 ## Commands
 
@@ -57,6 +58,14 @@ The `check-sync` command is based in two simple calculations:
 
 ## Installation
 
+
+| OS       | Tested                    |
+| -------- | ------------------------- |
+| Debian13 | ok                        |
+| Debian12 | ok                        |
+| Debian11 | `python3-psycopg` missing |
+
+
 Clone de repository into the server
 
 ```bash
@@ -74,13 +83,7 @@ sudo dnf install python3-psycopg3
 > If the OS psycopg version is not compatible, you can use a virtual environment, see
 > below for configuration.
 
-Copy global configuration into a local file and add PostgreSQL connection parameters
-
-```bash
-cd check_logical_replication_lemonldap/
-cp configuration.json configuration.local.json
-vim configuration.local.json
-```
+Define configuration, see configuration section at the top.
 
 ### Installation via a virtual environment
 
@@ -91,3 +94,4 @@ environment.
 cd check_logical_replication_lemonldap/
 python3 -m pip venv .venv
 python3 -m pip install -r requirements.txt
+```

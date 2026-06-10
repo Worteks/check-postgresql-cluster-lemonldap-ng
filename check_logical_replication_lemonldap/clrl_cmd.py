@@ -50,13 +50,15 @@ def define_configuration(configuration_file: Path) -> dict:
 
 def check_connection(server_info: dict):
     """
-    Connect and disconnects to PostgreSQL database to confirm that everything
+    Connects into database. Reads tables: lmConfig, sessions and psessions.
+    Finally disconnects from the database to confirm that everything
     is ok.
 
     Parameters:
     server_info (dict): Dictionary with server configuration.
     """
     connect = psql.connect_to_database(server_info)
+    psql.check_read_tables(connect)
     psql.disconnect_to_database(connect)
 
 
