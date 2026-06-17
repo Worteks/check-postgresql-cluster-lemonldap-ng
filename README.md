@@ -76,10 +76,10 @@ $ ./check_logical_replication_lemonldap.py csync
 | Debian11 | `python3-psycopg` missing |
 
 
-Clone de repository into the server
+Clone de repository with latest tag into the server. For example:
 
 ```bash
-git clone https://github.com/Worteks/check-postgresql-cluster-lemonldap-ng.git
+git clone --branch v0.1.0 https://github.com/Worteks/check-postgresql-cluster-lemonldap-ng.git
 ```
 
 Install dependencies
