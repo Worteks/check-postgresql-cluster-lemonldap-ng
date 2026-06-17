@@ -29,23 +29,16 @@ psessions = Table("psessions", metadata_obj, autoload_with=lemonldap_server["mai
 
 def get_replication_config(server: str):
     connection = server_select_high_privilege(server)
-    sql_command = text("SELECT * FROM pg_hba_file_rules() WHERE user_name = '{replication}'")
-    results = connection.execute(sql_command).fetchall()
-    if results:
-        print("[Info] - pg_hba.conf:")
-        for result in results:
-            print(f'[Info] -> host: {result[6]}, db: {result[4][0]}, user: {result[5][0]}')
     sql_command = text("SELECT subconninfo FROM pg_subscription")
     results = connection.execute(sql_command).fetchall()
     if results:
-        print(f"[Info] - Subscriptions {server}:")
         # Result string formatting for printing
         results = results[0][0].replace("\n", "").split(" ")
-        results = " ".join([x for x in results if x])
-        print(f"[Info]  ->  {results}")
+        # Cut the array to do not show the user password.
+        results = " ".join([x for x in results[:-1] if x])
+        print(f"[Info] Subscriptions =>  {results}")
     else:
         print(f"[Warning] - Subscriptions in server {server} not found.")
-
 
 
 def get_server_config(server: str):
@@ -54,13 +47,23 @@ def get_server_config(server: str):
     sql_command = text("SHOW listen_addresses")
     listen_addresses = connection.execute(sql_command).fetchall()[0][0]
     if listen_addresses != "*":
-        print(f'[Warning] Listen_addresses not set to *, listen_addressess={listen_addresses}.')
+        print(f'[Warning] listen_addresses not set to *, listen_addressess={listen_addresses}.')
+    else:
+        print(f'[Info] listen_adresses set as: {listen_addresses}.')
 
     sql_command = text("SHOW wal_level")
     wal_level = connection.execute(sql_command).fetchall()[0][0]
     if wal_level != "logical":
         print(f'[Error] WAL level not set as logical, wal_level={wal_level}.')
         sys.exit(2)
+    else:
+        print(f'[Info] WAL level set as: {wal_level}.')
+
+    sql_command = text("SELECT * FROM pg_hba_file_rules() WHERE user_name = '{replication}'")
+    pg_hba_rules = connection.execute(sql_command).fetchall()
+    if pg_hba_rules:
+        for pg_hba_rule in pg_hba_rules:
+            print(f'[Info] pg_hba.conf => host: {pg_hba_rule[6]}, db: {pg_hba_rule[4][0]}, user: {pg_hba_rule[5][0]}')
 
 
 def server_select_high_privilege(server: str):

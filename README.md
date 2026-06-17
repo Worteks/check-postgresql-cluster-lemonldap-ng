@@ -10,51 +10,61 @@ You can copy the `env.bckp` file to start with obligatory variables.
 cp env.bckp .env
 ```
 
-Local configuration most include at least the `main` and `backup` server parameters;
-except for  `super_user` and `super_password`. This two last variables are used to read the
-[`pg_hba.conf`](https://www.postgresql.org/docs/16/auth-pg-hba-conf.html) file which requires special privileges in PostgreSQL.
+Local configuration most include `URL_MAIN` and `URL_BACKUP` for `csync` command.
+
+Local configuration most include `ADMIN_URL_MAIN` and `ADMIN_URL_BACKUP` for `cconfig` command.
 
 ## Commands
 
-### Check connection
-
-The `check-connection` command verify the connection to both databases from
-local server via the replication user.
-
-To be exhaustive, `check-postgresql-cluster-lemonldap-ng` should be run in both
-servers. Nevertheless, it is easier to test via the `psql` during the initial
-setup for a logical replication installation. 
-
-For example: 
-
-```bash
-PGPASSWORD=$PASSWORD psql -h $HOST -p $PORT -U "$REPLICATION" -d "$DATABASE"
-```
-
 ### Check configuration
 
-The `check-config` command verify logical replication parameters in PostgreSQL instance:
+> A `admin` user is needed for all checks.
+
+The `cconfig` command verify minimal configuration needed for logical replication.
+
+The parameters of PostgreSQL instance shown are:
 
 - `listen_addresses = *`, other configurations may work. Only a warning is
   shown for this attribute.
 - `wal_level = logical`, a error is shown since this is a necessary value.
+- `pg_hba_file_rules` entries with the replication user are shown.
 
-If `pg_hba_file_rules` view is readable via a super user, the `pg_hba.conf`
-entries with the replication user are shown. If not, a warning is shown.
+Also the subscriptions into LemonLDAP database are shown.
 
-> If a `super_user` is badly configured, this will result in an error.
+An example of the command:
+
+```bash
+$ ./check_logical_replication_lemonldap.py cconfig
+[Info] * Main server configuration:
+[Info] listen_adresses set as: *.
+[Info] WAL level set as: logical.
+[Info] pg_hba.conf => host: postgres-master.postgres_network, db: lemonldap, user: replication
+[Info] pg_hba.conf => host: postgres-backup.postgres_network, db: lemonldap, user: replication
+[Info] Subscriptions =>  host=postgres-backup port=5432 dbname=lemonldap user=replication
+[Info] * Backup server configuration:
+[Info] listen_adresses set as: *.
+[Info] WAL level set as: logical.
+[Info] pg_hba.conf => host: postgres-master.postgres_network, db: lemonldap, user: replication
+[Info] pg_hba.conf => host: postgres-backup.postgres_network, db: lemonldap, user: replication
+[Info] Subscriptions =>  host=postgres-master port=5432 dbname=lemonldap user=replication
+```
 
 ### Check synchronisation
 
-The `check-sync` command is based in two simple calculations:
+The `check-sync` verify if both LemonLDAP databases are synchronized. This is
+achieved by comparing the value of LemonLDAP configuration number, the total
+number of sessions and the total number of persistent sessions.
 
-- Get the latest configuration number for both databases. This table is the main
-  reason for replication, hence the verification. Most installations will be low
-  traffic. 
-- Count the number of entries in the `sessions` tables. The number of sessions
-  in main server is compared to the number of backup sessions. A margin of error
-  of 2 is added to account for the time needed to reflect a new connection. This
-  is repeated at most 5 times before declaring out of  sync.
+For sessions a difference of +/-3 sessions is accepted as synchronized.
+
+An example of the command:
+
+```bash
+$ ./check_logical_replication_lemonldap.py csync
+[Info] Configuration is synchronised.
+[Info] Sessions are synchronised.
+[Info] Persistent sessions are synchronised.
+```
 
 ## Installation
 
@@ -75,13 +85,15 @@ git clone https://github.com/Worteks/check-postgresql-cluster-lemonldap-ng.git
 Install dependencies
 ```bash
 # Debian
-# Fedora
 sudo apt install python3-psycopg python3-sqlalchemy python3-dotenv
-sudo dnf install python3-psycopg3
+# RHEL or clone
+sudo dnf install epel-release
+sudo dnf install python3-psycopg3 python3-sqlalchemy python3-dotenv
+# Fedora
+sudo dnf install python3-psycopg3 python3-sqlalchemy python3-dotenv
 ```
 
-> If the OS psycopg version is not compatible, you can use a virtual environment, see
-> below for configuration.
+> If the OS version is not compatible, you can use a virtual environment. See below.
 
 Define configuration, see configuration section at the top.
 
