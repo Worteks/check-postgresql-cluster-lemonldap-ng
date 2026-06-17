@@ -3,21 +3,13 @@ import clrl_cmd
 from pathlib import Path
 
 
-def check_sync(configuration: dict):
-    clrl_cmd.check_sync(configuration['main'], configuration['backup'])
+def check_sync():
+    clrl_cmd.check_sync()
 
 
-def check_config(configuration: dict):
-    for server in configuration.keys():
-        print(f"* {server.capitalize()} server configuration:")
-        clrl_cmd.check_config(configuration[server])
-        print("Configuration is ok")
-
-
-def check_connection(configuration: dict):
-    for server in configuration.keys():
-        clrl_cmd.check_connection(configuration[server])
-        print(f"* Connection from local to {server}: ok")
+def check_config():
+    clrl_cmd.check_config()
+    print("[Info] PostgreSQL configuration is ok.")
 
 
 # Argument parsing
@@ -34,27 +26,21 @@ subparsers = parser.add_subparsers(
 subparsers.required = True
 
 sync_parser = subparsers.add_parser(
-        "check-sync",
+        "csync",
         help="Verify replication between both PostgreSQL servers.",
         )
 sync_parser.set_defaults(func=check_sync)
 
 config_parser = subparsers.add_parser(
-        "check-config",
+        "cconfig",
         help="Check basic logical replication configuration, by default in \
                 both servers.",
         )
 config_parser.set_defaults(func=check_config)
 
-connection_parser = subparsers.add_parser(
-        "check-connection",
-        help="Test connection from running server into both servers.",
-        )
-connection_parser.set_defaults(func=check_connection)
-
 # Options
 parser.add_argument(
-        "--version", action="version",
+        "-v", "--version", action="version",
         version="%(prog)s 0.0.1"
 )
 parser.add_argument(
@@ -64,16 +50,14 @@ parser.add_argument(
         type=Path
         )
 parser.add_argument(
-        "-v", "--verbose",
-        help="Increase output verbosity.",
+        "-d", "--debug",
+        help="Run in debug mode.",
         action="store_true"
         )
 
 args = parser.parse_args()
+DEBUG = args.debug
 
-
-configuration = clrl_cmd.define_configuration(args.config)
-
-args.func(configuration)
+args.func()
 
 exit(0)

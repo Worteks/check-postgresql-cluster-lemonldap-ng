@@ -75,8 +75,8 @@ git clone https://github.com/Worteks/check-postgresql-cluster-lemonldap-ng.git
 Install dependencies
 ```bash
 # Debian
-sudo apt install python3-psycopg
 # Fedora
+sudo apt install python3-psycopg python3-sqlalchemy python3-dotenv
 sudo dnf install python3-psycopg3
 ```
 
