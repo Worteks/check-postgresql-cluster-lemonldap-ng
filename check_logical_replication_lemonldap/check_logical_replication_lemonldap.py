@@ -1,6 +1,6 @@
+#!/usr/bin/python3
 import argparse
 import clrl_cmd
-from pathlib import Path
 
 
 def check_sync():
@@ -9,7 +9,6 @@ def check_sync():
 
 def check_config():
     clrl_cmd.check_config()
-    print("[Info] PostgreSQL configuration is ok.")
 
 
 # Argument parsing
@@ -43,12 +42,6 @@ parser.add_argument(
         "-v", "--version", action="version",
         version="%(prog)s 0.0.1"
 )
-parser.add_argument(
-        "-c", "--config",
-        help="Define à configuration file",
-        default="./configuration.local.json",
-        type=Path
-        )
 parser.add_argument(
         "-d", "--debug",
         help="Run in debug mode.",

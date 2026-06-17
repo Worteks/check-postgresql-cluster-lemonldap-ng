@@ -9,29 +9,20 @@ def check_config():
     Parameters:
     server_info (dict): Dictionary with server configuration.
     """
-    # TODO: Add a Select to a table to make sure of permissions for tables.
-    # TODO: Add verification dans high privilege user is added.
-    print("[Info] * Main server configuration:")
-    psql.get_server_config("main")
-    psql.get_replication_config("main")
-    print("[Info]   * Ok")
+    for server in ["main", "backup"]:
 
-    print("[Info] * Backup server configuration:")
-    psql.get_server_config("backup")
-    psql.get_replication_config("backup")
-    print("[Info]   * Ok")
+        print(f"[Info] * {server.capitalize()} server configuration:")
+        psql.get_server_config(server)
+        psql.get_replication_config(server)
 
 
 def check_sync(interval: int = 3):
     """
-    Check configuration for listen_addresses, wal_level and pg_hba file.
+    Check synchronisation for LemonLDAP configruation, sessions and psessions.
 
     Parameters:
-    server_info_main (dict): Dictionary with configuration for main server.
-    server_info_backup (dict): Dictionary with configuration for backup server.
-    sensibility (int): Intervale to consider sessions synchronised.
+    interval (int): Intervale to consider sessions synchronised.
     """
-
     for _ in range(2):
         value = compare_config_number()
         if value:

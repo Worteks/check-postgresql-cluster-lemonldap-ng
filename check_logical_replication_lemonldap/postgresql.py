@@ -1,4 +1,3 @@
-import psycopg
 import sys
 from dotenv import dotenv_values
 
@@ -9,8 +8,6 @@ from sqlalchemy.exc import OperationalError
 
 
 config_local = dotenv_values(".env")
-# TODO: Add superuser for priviledge selects.
-
 # TODO: Make proper debug function
 DEBUG = False
 
@@ -31,15 +28,6 @@ psessions = Table("psessions", metadata_obj, autoload_with=lemonldap_server["mai
 
 
 def get_replication_config(server: str):
-    """
-    Get pg_hba view entries for the replication user.
-
-    This view can be helpful to diagnose a previous failure. Note that this
-    view reports on the current contents of the file, not on what was last
-    loaded by the server.
-    - Raises an error connection to database is not possible.
-    - Raises a warning if not sufficient privilege to read view.
-    """
     connection = server_select_high_privilege(server)
     sql_command = text("SELECT * FROM pg_hba_file_rules() WHERE user_name = '{replication}'")
     results = connection.execute(sql_command).fetchall()
@@ -48,13 +36,16 @@ def get_replication_config(server: str):
         for result in results:
             print(f'[Info] -> host: {result[6]}, db: {result[4][0]}, user: {result[5][0]}')
     sql_command = text("SELECT subconninfo FROM pg_subscription")
-    results = connection.execute(sql_command).fetchall()[0][0]
+    results = connection.execute(sql_command).fetchall()
     if results:
         print(f"[Info] - Subscriptions {server}:")
         # Result string formatting for printing
-        results = results.replace("\n", "").split(" ")
+        results = results[0][0].replace("\n", "").split(" ")
         results = " ".join([x for x in results if x])
         print(f"[Info]  ->  {results}")
+    else:
+        print(f"[Warning] - Subscriptions in server {server} not found.")
+
 
 
 def get_server_config(server: str):
@@ -93,15 +84,6 @@ def select_table(table):
     print(f"[Error] Table: {table} is not a LemonLDAP database table.")
     sys.exit(2)
 
-
-# TODO: Add low level replication check
-#def check_replication(dbcursor, statement):
-#    dbcursor.execute("SELECT *  FROM pg_subscription;")
-#    replication = dbcursor.fetchone()
-#    if replication is None:
-#        cursor.execute(statement)
-#    else:
-#        print("The replication exists already.")
 
 def server_select(server: str):
     try:
